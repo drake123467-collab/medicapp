@@ -88,13 +88,17 @@ export default function App() {
         WebkitBackdropFilter: 'blur(16px)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: 'var(--accent)', letterSpacing: '-0.02em' }}>
-              MedicApp
-            </h1>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-              {activeMeds} medicamento{activeMeds !== 1 ? 's' : ''} activo{activeMeds !== 1 ? 's' : ''}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src="/icon-192.png" alt="foto"
+              style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(108,99,255,0.5)', flexShrink: 0 }} />
+            <div>
+              <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, color: 'var(--accent)', letterSpacing: '-0.02em' }}>
+                Para Juan Carlos
+              </h1>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
+                {activeMeds} medicamento{activeMeds !== 1 ? 's' : ''} activo{activeMeds !== 1 ? 's' : ''}
+              </p>
+            </div>
           </div>
           {tab === 'meds' && (
             <button onClick={() => { setEditMed(null); setShowForm(true); }}

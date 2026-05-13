@@ -33,6 +33,8 @@ export default function TodayView({ medications }) {
   const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   const now = new Date();
   const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
 
   function toggleTaken(key) {
     setTaken(t => ({ ...t, [key]: !t[key] }));
@@ -52,9 +54,9 @@ export default function TodayView({ medications }) {
     <div>
       <div style={{ marginBottom: 20 }}>
         <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{dateStr}</p>
-        <h2 style={{ fontSize: 22, fontWeight: 600 }}>Medicamentos de hoy</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 600 }}>{greeting}, Juan Carlos</h2>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
-          {timeline.filter((e, i) => taken[`${e.id}-${e.time}`]).length} de {timeline.length} tomados
+          {timeline.filter((e) => taken[`${e.id}-${e.time}`]).length} de {timeline.length} tomados hoy
         </p>
       </div>
 
