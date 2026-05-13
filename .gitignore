@@ -3,5 +3,7 @@ client/node_modules/
 client/dist/
 server/data.json
 server/subscriptions.json
+server/alarm.mp3
+server/alarm-meta.json
 .env
 .claude/

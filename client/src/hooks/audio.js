@@ -1,50 +1,27 @@
-const DB_NAME = 'medicapp-db';
-const STORE = 'alarm';
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => {
-      if (!e.target.result.objectStoreNames.contains(STORE)) {
-        e.target.result.createObjectStore(STORE);
-      }
-    };
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror = () => reject(req.error);
+export async function uploadAlarmAudio(file) {
+  const res = await fetch('/api/alarm-audio', {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type || 'audio/mpeg',
+      'X-Filename': encodeURIComponent(file.name),
+    },
+    body: file,
   });
+  if (!res.ok) throw new Error('Error al subir el audio');
+  return res.json();
 }
 
-export async function saveAlarmAudio(file) {
-  const buffer = await file.arrayBuffer();
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put({ buffer, name: file.name }, 'custom');
-    tx.oncomplete = resolve;
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-export async function getAlarmAudio() {
+export async function getAlarmAudioMeta() {
   try {
-    const db = await openDB();
-    return new Promise(resolve => {
-      const req = db.transaction(STORE, 'readonly').objectStore(STORE).get('custom');
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => resolve(null);
-    });
+    const res = await fetch('/api/alarm-audio/meta');
+    return res.ok ? res.json() : { exists: false };
   } catch {
-    return null;
+    return { exists: false };
   }
 }
 
 export async function clearAlarmAudio() {
-  const db = await openDB();
-  return new Promise(resolve => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).delete('custom');
-    tx.oncomplete = resolve;
-  });
+  await fetch('/api/alarm-audio', { method: 'DELETE' });
 }
 
 function playDefaultTone(ctx) {
@@ -65,9 +42,10 @@ function playDefaultTone(ctx) {
 export async function playAlarm() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const data = await getAlarmAudio();
-    if (data?.buffer) {
-      const audioBuffer = await ctx.decodeAudioData(data.buffer.slice(0));
+    const res = await fetch('/api/alarm-audio');
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      const audioBuffer = await ctx.decodeAudioData(buffer);
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);

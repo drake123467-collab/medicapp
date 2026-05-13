@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getVapidKey, saveSubscription, testNotify, urlBase64ToUint8Array } from '../hooks/api';
-import { saveAlarmAudio, getAlarmAudio, clearAlarmAudio, playAlarm } from '../hooks/audio';
+import { uploadAlarmAudio, getAlarmAudioMeta, clearAlarmAudio, playAlarm } from '../hooks/audio';
 
 export default function NotificationsPanel({ onTestSound }) {
   const [status, setStatus] = useState('idle'); // idle | subscribing | subscribed | unsupported
   const [msg, setMsg] = useState('');
   const [audioName, setAudioName] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef();
 
   useEffect(() => {
-    getAlarmAudio().then(data => setAudioName(data?.name || null));
+    getAlarmAudioMeta().then(meta => setAudioName(meta.exists ? meta.name : null));
   }, []);
 
   async function handleAudioUpload(e) {
@@ -19,16 +20,23 @@ export default function NotificationsPanel({ onTestSound }) {
       setMsg('⚠️ El archivo no puede superar 5 MB.');
       return;
     }
-    await saveAlarmAudio(file);
-    setAudioName(file.name);
-    setMsg('✅ Audio guardado. Se usará en las próximas alarmas.');
+    setUploading(true);
+    setMsg('');
+    try {
+      await uploadAlarmAudio(file);
+      setAudioName(file.name);
+      setMsg('✅ Audio subido. Todos los dispositivos usarán este sonido.');
+    } catch {
+      setMsg('❌ Error al subir el audio. Intentá de nuevo.');
+    }
+    setUploading(false);
     e.target.value = '';
   }
 
   async function handleClearAudio() {
     await clearAlarmAudio();
     setAudioName(null);
-    setMsg('Tono restablecido al predeterminado.');
+    setMsg('Tono restablecido al predeterminado en todos los dispositivos.');
   }
 
   useEffect(() => {
@@ -146,9 +154,9 @@ export default function NotificationsPanel({ onTestSound }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={() => fileInputRef.current.click()}
-            style={{ flex: 1, minWidth: 120, padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(108,99,255,0.12)', color: 'var(--accent)', border: '1px solid rgba(108,99,255,0.25)', cursor: 'pointer' }}>
-            📁 {audioName ? 'Cambiar MP3' : 'Subir MP3'}
+          <button onClick={() => fileInputRef.current.click()} disabled={uploading}
+            style={{ flex: 1, minWidth: 120, padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(108,99,255,0.12)', color: 'var(--accent)', border: '1px solid rgba(108,99,255,0.25)', cursor: 'pointer', opacity: uploading ? 0.6 : 1 }}>
+            {uploading ? '⏳ Subiendo...' : `📁 ${audioName ? 'Cambiar MP3' : 'Subir MP3'}`}
           </button>
           <button onClick={playAlarm}
             style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer' }}>
@@ -163,7 +171,7 @@ export default function NotificationsPanel({ onTestSound }) {
         </div>
         <input ref={fileInputRef} type="file" accept="audio/mp3,audio/mpeg,audio/*" onChange={handleAudioUpload} style={{ display: 'none' }} />
         <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>
-          El audio se guarda en este dispositivo. Máx. 5 MB.
+          El audio se guarda en el servidor y suena en todos los dispositivos. Máx. 5 MB.
         </p>
       </div>
 

@@ -111,6 +111,37 @@ app.get('/api/vapid-key', (req, res) => {
   res.json({ publicKey: VAPID_PUBLIC });
 });
 
+// Upload custom alarm audio
+app.post('/api/alarm-audio', express.raw({ type: '*/*', limit: '5mb' }), async (req, res) => {
+  const name = decodeURIComponent(req.headers['x-filename'] || 'alarm.mp3');
+  await fs.writeFile(path.join(__dirname, 'alarm.mp3'), req.body);
+  await fs.writeJson(path.join(__dirname, 'alarm-meta.json'), { name });
+  res.json({ ok: true });
+});
+
+// Get alarm audio metadata
+app.get('/api/alarm-audio/meta', async (req, res) => {
+  const exists = await fs.pathExists(path.join(__dirname, 'alarm.mp3'));
+  if (!exists) return res.json({ exists: false });
+  const meta = await fs.readJson(path.join(__dirname, 'alarm-meta.json')).catch(() => ({ name: 'alarm.mp3' }));
+  res.json({ exists: true, name: meta.name });
+});
+
+// Serve alarm audio file
+app.get('/api/alarm-audio', async (req, res) => {
+  const filePath = path.join(__dirname, 'alarm.mp3');
+  if (!await fs.pathExists(filePath)) return res.status(404).json({ error: 'No custom audio' });
+  res.setHeader('Content-Type', 'audio/mpeg');
+  res.sendFile(filePath);
+});
+
+// Delete alarm audio
+app.delete('/api/alarm-audio', async (req, res) => {
+  await fs.remove(path.join(__dirname, 'alarm.mp3')).catch(() => {});
+  await fs.remove(path.join(__dirname, 'alarm-meta.json')).catch(() => {});
+  res.json({ ok: true });
+});
+
 // Test push notification
 app.post('/api/test-notify', async (req, res) => {
   const subs = await readSubs();
