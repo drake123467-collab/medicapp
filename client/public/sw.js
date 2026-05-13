@@ -16,7 +16,9 @@ function playDefaultTone(ctx) {
 async function playAlarmInSW() {
   try {
     const ctx = new AudioContext();
-    const res = await fetch('/api/alarm-audio');
+    // Try custom uploaded audio, then fall back to bundled alarm.mp3
+    const custom = await fetch('/api/alarm-audio').catch(() => null);
+    const res = custom?.ok ? custom : await fetch('/alarm.mp3');
     if (res.ok) {
       const buffer = await res.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(buffer);
