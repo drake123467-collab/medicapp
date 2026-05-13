@@ -8,8 +8,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const DATA_FILE = path.join(__dirname, 'data.json');
-const SUBS_FILE = path.join(__dirname, 'subscriptions.json');
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DATA_FILE = path.join(DATA_DIR, 'data.json');
+const SUBS_FILE = path.join(DATA_DIR, 'subscriptions.json');
 
 // VAPID keys — generá las tuyas con: npx web-push generate-vapid-keys
 // Y ponelas en variables de entorno en Railway
@@ -114,22 +115,22 @@ app.get('/api/vapid-key', (req, res) => {
 // Upload custom alarm audio
 app.post('/api/alarm-audio', express.raw({ type: '*/*', limit: '5mb' }), async (req, res) => {
   const name = decodeURIComponent(req.headers['x-filename'] || 'alarm.mp3');
-  await fs.writeFile(path.join(__dirname, 'alarm.mp3'), req.body);
-  await fs.writeJson(path.join(__dirname, 'alarm-meta.json'), { name });
+  await fs.writeFile(path.join(DATA_DIR, 'alarm.mp3'), req.body);
+  await fs.writeJson(path.join(DATA_DIR, 'alarm-meta.json'), { name });
   res.json({ ok: true });
 });
 
 // Get alarm audio metadata
 app.get('/api/alarm-audio/meta', async (req, res) => {
-  const exists = await fs.pathExists(path.join(__dirname, 'alarm.mp3'));
+  const exists = await fs.pathExists(path.join(DATA_DIR, 'alarm.mp3'));
   if (!exists) return res.json({ exists: false });
-  const meta = await fs.readJson(path.join(__dirname, 'alarm-meta.json')).catch(() => ({ name: 'alarm.mp3' }));
+  const meta = await fs.readJson(path.join(DATA_DIR, 'alarm-meta.json')).catch(() => ({ name: 'alarm.mp3' }));
   res.json({ exists: true, name: meta.name });
 });
 
 // Serve alarm audio file
 app.get('/api/alarm-audio', async (req, res) => {
-  const filePath = path.join(__dirname, 'alarm.mp3');
+  const filePath = path.join(DATA_DIR, 'alarm.mp3');
   if (!await fs.pathExists(filePath)) return res.status(404).json({ error: 'No custom audio' });
   res.setHeader('Content-Type', 'audio/mpeg');
   res.sendFile(filePath);
@@ -137,8 +138,8 @@ app.get('/api/alarm-audio', async (req, res) => {
 
 // Delete alarm audio
 app.delete('/api/alarm-audio', async (req, res) => {
-  await fs.remove(path.join(__dirname, 'alarm.mp3')).catch(() => {});
-  await fs.remove(path.join(__dirname, 'alarm-meta.json')).catch(() => {});
+  await fs.remove(path.join(DATA_DIR, 'alarm.mp3')).catch(() => {});
+  await fs.remove(path.join(DATA_DIR, 'alarm-meta.json')).catch(() => {});
   res.json({ ok: true });
 });
 
