@@ -1,9 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getVapidKey, saveSubscription, testNotify, urlBase64ToUint8Array } from '../hooks/api';
+import { saveAlarmAudio, getAlarmAudio, clearAlarmAudio, playAlarm } from '../hooks/audio';
 
 export default function NotificationsPanel({ onTestSound }) {
   const [status, setStatus] = useState('idle'); // idle | subscribing | subscribed | unsupported
   const [msg, setMsg] = useState('');
+  const [audioName, setAudioName] = useState(null);
+  const fileInputRef = useRef();
+
+  useEffect(() => {
+    getAlarmAudio().then(data => setAudioName(data?.name || null));
+  }, []);
+
+  async function handleAudioUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setMsg('⚠️ El archivo no puede superar 5 MB.');
+      return;
+    }
+    await saveAlarmAudio(file);
+    setAudioName(file.name);
+    setMsg('✅ Audio guardado. Se usará en las próximas alarmas.');
+    e.target.value = '';
+  }
+
+  async function handleClearAudio() {
+    await clearAlarmAudio();
+    setAudioName(null);
+    setMsg('Tono restablecido al predeterminado.');
+  }
 
   useEffect(() => {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -102,6 +128,44 @@ export default function NotificationsPanel({ onTestSound }) {
       </div>
 
       {msg && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>{msg}</p>}
+
+      {/* Audio personalizado */}
+      <div style={{ marginTop: 14, padding: '14px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+        <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+          Sonido de alarma
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{ fontSize: 18 }}>🔊</span>
+          <span style={{ fontSize: 13, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {audioName ? audioName : 'Tono por defecto'}
+          </span>
+          {audioName && (
+            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'rgba(67,233,123,0.15)', color: 'var(--accent3)', border: '1px solid rgba(67,233,123,0.3)', whiteSpace: 'nowrap' }}>
+              personalizado
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={() => fileInputRef.current.click()}
+            style={{ flex: 1, minWidth: 120, padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(108,99,255,0.12)', color: 'var(--accent)', border: '1px solid rgba(108,99,255,0.25)', cursor: 'pointer' }}>
+            📁 {audioName ? 'Cambiar MP3' : 'Subir MP3'}
+          </button>
+          <button onClick={playAlarm}
+            style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer' }}>
+            ▶ Probar
+          </button>
+          {audioName && (
+            <button onClick={handleClearAudio}
+              style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, background: 'rgba(255,101,132,0.1)', color: 'var(--accent2)', border: '1px solid rgba(255,101,132,0.2)', cursor: 'pointer' }}>
+              ↩ Predeterminado
+            </button>
+          )}
+        </div>
+        <input ref={fileInputRef} type="file" accept="audio/mp3,audio/mpeg,audio/*" onChange={handleAudioUpload} style={{ display: 'none' }} />
+        <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.5 }}>
+          El audio se guarda en este dispositivo. Máx. 5 MB.
+        </p>
+      </div>
 
       <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
         <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>

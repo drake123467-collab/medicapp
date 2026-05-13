@@ -4,24 +4,7 @@ import MedicationForm from './components/MedicationForm';
 import NotificationsPanel from './components/NotificationsPanel';
 import TodayView from './components/TodayView';
 import { getMedications, addMedication, updateMedication, deleteMedication } from './hooks/api';
-
-function playAlarm() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [[0, 880], [0.32, 880], [0.64, 1100]].forEach(([t, freq]) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.3);
-    });
-  } catch (e) {}
-}
+import { playAlarm } from './hooks/audio';
 
 const TABS = [
   { id: 'today', label: '📋 Hoy', icon: '📋' },
