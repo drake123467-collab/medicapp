@@ -5,6 +5,24 @@ import NotificationsPanel from './components/NotificationsPanel';
 import TodayView from './components/TodayView';
 import { getMedications, addMedication, updateMedication, deleteMedication } from './hooks/api';
 
+function playAlarm() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[0, 880], [0.32, 880], [0.64, 1100]].forEach(([t, freq]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.3);
+    });
+  } catch (e) {}
+}
+
 const TABS = [
   { id: 'today', label: '📋 Hoy', icon: '📋' },
   { id: 'meds', label: '💊 Medicamentos', icon: '💊' },
@@ -36,6 +54,14 @@ export default function App() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
+  }, []);
+
+  // Play alarm when SW sends PLAY_ALARM message (app is in foreground)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = e => { if (e.data?.type === 'PLAY_ALARM') playAlarm(); };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
   }, []);
 
   async function handleSave(data) {
@@ -134,7 +160,7 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Notificaciones y alarmas</h2>
-                  <NotificationsPanel />
+                  <NotificationsPanel onTestSound={playAlarm} />
                 </div>
 
                 <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius)', padding: '16px 18px' }}>

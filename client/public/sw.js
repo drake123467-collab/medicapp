@@ -1,3 +1,21 @@
+function playAlarmInSW() {
+  try {
+    const ctx = new AudioContext();
+    [[0, 880], [0.32, 880], [0.64, 1100]].forEach(([t, freq]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.3);
+    });
+  } catch (e) {}
+}
+
 self.addEventListener('push', function (event) {
   if (!event.data) return;
 
@@ -17,7 +35,13 @@ self.addEventListener('push', function (event) {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    Promise.all([
+      self.registration.showNotification(data.title, options),
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+        clients.forEach(c => c.postMessage({ type: 'PLAY_ALARM' }));
+        if (clients.length === 0) playAlarmInSW();
+      })
+    ])
   );
 });
 

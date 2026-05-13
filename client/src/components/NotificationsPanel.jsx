@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getVapidKey, saveSubscription, testNotify, urlBase64ToUint8Array } from '../hooks/api';
 
-export default function NotificationsPanel() {
+export default function NotificationsPanel({ onTestSound }) {
   const [status, setStatus] = useState('idle'); // idle | subscribing | subscribed | unsupported
   const [msg, setMsg] = useState('');
 
@@ -91,6 +91,12 @@ export default function NotificationsPanel() {
           <button onClick={handleTest}
             style={{ flex: 1, minWidth: 140, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'rgba(108,99,255,0.12)', color: 'var(--accent)', border: '1px solid rgba(108,99,255,0.25)' }}>
             ▶ Enviar prueba
+          </button>
+        )}
+        {onTestSound && (
+          <button onClick={onTestSound}
+            style={{ flex: 1, minWidth: 140, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+            🔊 Probar sonido
           </button>
         )}
       </div>
