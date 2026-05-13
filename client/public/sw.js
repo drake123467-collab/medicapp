@@ -1,3 +1,29 @@
+const CACHE = 'medicapp-v1';
+const SHELL = ['/', '/icon-192.png', '/icon-512.png', '/alarm.mp3'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
+
 function playDefaultTone(ctx) {
   [[0, 880], [0.32, 880], [0.64, 1100]].forEach(([t, freq]) => {
     const osc = ctx.createOscillator();
