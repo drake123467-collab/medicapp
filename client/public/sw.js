@@ -56,12 +56,7 @@ self.addEventListener('push', function (event) {
     tag: data.tag || 'medicapp',
     renotify: true,
     requireInteraction: true,
-    vibrate: [300, 100, 300, 100, 300, 100, 300],
-    silent: false,
-    actions: [
-      { action: 'taken', title: '✅ Tomado' },
-      { action: 'snooze', title: '⏰ En 10 min' }
-    ]
+    vibrate: [300, 100, 300, 100, 300],
   };
 
   event.waitUntil(
