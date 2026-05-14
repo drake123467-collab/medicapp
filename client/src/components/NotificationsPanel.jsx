@@ -42,8 +42,25 @@ export default function NotificationsPanel({ onTestSound }) {
   useEffect(() => {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
       setStatus('unsupported');
-    } else if (Notification.permission === 'granted') {
-      setStatus('subscribed');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      // Auto re-register subscription on every load to keep server in sync
+      navigator.serviceWorker.ready.then(async reg => {
+        try {
+          const publicKey = await getVapidKey();
+          const existing = await reg.pushManager.getSubscription();
+          if (existing) {
+            await saveSubscription(existing.toJSON());
+            setStatus('subscribed');
+          } else {
+            // Permission granted but no subscription — need to re-subscribe
+            setStatus('idle');
+          }
+        } catch (e) {
+          setStatus('subscribed');
+        }
+      });
     }
   }, []);
 
@@ -125,6 +142,12 @@ export default function NotificationsPanel({ onTestSound }) {
           <button onClick={handleTest}
             style={{ flex: 1, minWidth: 140, padding: '10px 16px', borderRadius: 10, fontSize: 13, background: 'rgba(108,99,255,0.12)', color: 'var(--accent)', border: '1px solid rgba(108,99,255,0.25)' }}>
             ▶ Enviar prueba
+          </button>
+        )}
+        {status === 'subscribed' && (
+          <button onClick={subscribe}
+            style={{ padding: '10px 14px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+            ↺ Re-registrar
           </button>
         )}
         {onTestSound && (
