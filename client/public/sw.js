@@ -54,9 +54,10 @@ self.addEventListener('push', function (event) {
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-72.png',
     tag: data.tag || 'medicapp',
-    renotify: data.renotify || false,
+    renotify: true,
     requireInteraction: true,
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [300, 100, 300, 100, 300, 100, 300],
+    silent: false,
     actions: [
       { action: 'taken', title: '✅ Tomado' },
       { action: 'snooze', title: '⏰ En 10 min' }
@@ -64,13 +65,12 @@ self.addEventListener('push', function (event) {
   };
 
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(data.title, options),
+    self.registration.showNotification(data.title, options).then(() =>
       self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
         clients.forEach(c => c.postMessage({ type: 'PLAY_ALARM' }));
         if (clients.length === 0) playAlarmInSW();
       })
-    ])
+    )
   );
 });
 

@@ -42,7 +42,8 @@ function playDefaultTone(ctx) {
 export async function playAlarm() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Try custom uploaded audio, then fall back to bundled alarm.mp3
+    // Chrome Android suspends AudioContext — must resume before playing
+    if (ctx.state === 'suspended') await ctx.resume();
     const custom = await fetch('/api/alarm-audio').catch(() => null);
     const res = custom?.ok ? custom : await fetch('/alarm.mp3');
     if (res.ok) {
