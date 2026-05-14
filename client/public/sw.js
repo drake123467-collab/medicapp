@@ -46,26 +46,36 @@ async function playAlarmInSW() {
 }
 
 self.addEventListener('push', function (event) {
-  if (!event.data) return;
+  let title = '💊 MedicApp';
+  let body = 'Recordatorio de medicamento';
 
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-72.png',
-    tag: data.tag || 'medicapp',
-    renotify: true,
-    requireInteraction: true,
-    vibrate: [300, 100, 300, 100, 300],
-  };
+  try {
+    if (event.data) {
+      const d = event.data.json();
+      if (d.title) title = d.title;
+      if (d.body) body = d.body;
+    }
+  } catch (e) {}
 
+  // Audio y mensajes a clientes: fire-and-forget, nunca bloquean la notificación
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(clients => {
+      if (clients.length > 0) {
+        clients.forEach(c => { try { c.postMessage({ type: 'PLAY_ALARM' }); } catch (e) {} });
+      } else {
+        playAlarmInSW();
+      }
+    }).catch(() => {});
+
+  // Solo la notificación va en waitUntil — mínima y robusta
   event.waitUntil(
-    self.registration.showNotification(data.title, options).then(() =>
-      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-        clients.forEach(c => c.postMessage({ type: 'PLAY_ALARM' }));
-        if (clients.length === 0) playAlarmInSW();
-      })
-    )
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icon-192.png',
+      tag: 'medicapp',
+      renotify: true,
+      vibrate: [300, 100, 300, 100, 300],
+    })
   );
 });
 
