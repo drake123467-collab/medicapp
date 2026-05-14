@@ -143,6 +143,16 @@ app.delete('/api/alarm-audio', async (req, res) => {
   res.json({ ok: true });
 });
 
+// SW diagnostic log
+let swLogs = [];
+app.post('/api/sw-log', (req, res) => {
+  const entry = { ...req.body, received: new Date().toISOString() };
+  swLogs.push(entry);
+  if (swLogs.length > 20) swLogs = swLogs.slice(-20);
+  console.log('[SW-LOG]', entry);
+  res.json({ ok: true });
+});
+
 // Debug info
 app.get('/api/debug', async (req, res) => {
   const subs = await readSubs();
@@ -153,6 +163,7 @@ app.get('/api/debug', async (req, res) => {
     timezone: process.env.TZ || 'no configurado',
     subscriptions: subs.subscriptions.length,
     endpoints: subs.subscriptions.map(s => s.endpoint.slice(-30)),
+    swLogs: swLogs.slice(-5),
   });
 });
 

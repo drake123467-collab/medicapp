@@ -166,7 +166,17 @@ export default function NotificationsPanel({ onTestSound }) {
         <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 8, background: 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7 }}>
           <span style={{ color: 'var(--accent)' }}>suscripciones:</span> {debugInfo.subscriptions}<br/>
           <span style={{ color: 'var(--accent)' }}>hora servidor:</span> {debugInfo.localTime}<br/>
-          <span style={{ color: 'var(--accent)' }}>timezone:</span> {debugInfo.timezone}
+          <span style={{ color: 'var(--accent)' }}>timezone:</span> {debugInfo.timezone}<br/>
+          <span style={{ color: 'var(--accent)' }}>sw-log:</span>{' '}
+          {debugInfo.swLogs && debugInfo.swLogs.length > 0
+            ? debugInfo.swLogs.map((l, i) => (
+                <span key={i} style={{ color: l.ok ? 'var(--accent3)' : 'var(--accent2)' }}>
+                  {l.ok ? '✓OK' : '✗' + l.error}
+                  {' '}
+                </span>
+              ))
+            : <span>sin datos (activá alarmas y enviá prueba)</span>
+          }
         </div>
       )}
 
