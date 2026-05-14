@@ -143,6 +143,19 @@ app.delete('/api/alarm-audio', async (req, res) => {
   res.json({ ok: true });
 });
 
+// Debug info
+app.get('/api/debug', async (req, res) => {
+  const subs = await readSubs();
+  const now = new Date();
+  res.json({
+    serverTime: now.toISOString(),
+    localTime: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    timezone: process.env.TZ || 'no configurado',
+    subscriptions: subs.subscriptions.length,
+    endpoints: subs.subscriptions.map(s => s.endpoint.slice(-30)),
+  });
+});
+
 // Test push notification
 app.post('/api/test-notify', async (req, res) => {
   const subs = await readSubs();
