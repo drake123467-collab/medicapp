@@ -46,35 +46,18 @@ async function playAlarmInSW() {
 }
 
 self.addEventListener('push', function (event) {
-  let title = '💊 MedicApp';
-  let body = 'Recordatorio de medicamento';
-
-  try {
-    if (event.data) {
-      const d = event.data.json();
-      if (d.title) title = d.title;
-      if (d.body) body = d.body;
-    }
-  } catch (e) {}
-
-  // Audio y mensajes a clientes: fire-and-forget, nunca bloquean la notificación
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    .then(clients => {
-      if (clients.length > 0) {
-        clients.forEach(c => { try { c.postMessage({ type: 'PLAY_ALARM' }); } catch (e) {} });
-      } else {
-        playAlarmInSW();
-      }
-    }).catch(() => {});
-
-  // Solo la notificación va en waitUntil — mínima y robusta
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: '/icon-192.png',
-      tag: 'medicapp',
-      renotify: true,
-      vibrate: [300, 100, 300, 100, 300],
+    Promise.resolve().then(function () {
+      var title = '💊 MedicApp';
+      var body = 'Es hora de tomar tu medicamento';
+      try {
+        if (event.data) {
+          var d = event.data.json();
+          if (d.title) title = d.title;
+          if (d.body) body = d.body;
+        }
+      } catch (e) {}
+      return self.registration.showNotification(title, { body: body });
     })
   );
 });
