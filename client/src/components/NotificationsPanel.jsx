@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getVapidKey, saveSubscription, testNotify, urlBase64ToUint8Array } from '../hooks/api';
+import { getVapidKey, saveSubscription, testNotify, urlBase64ToUint8Array, getDebugInfo } from '../hooks/api';
 import { uploadAlarmAudio, getAlarmAudioMeta, clearAlarmAudio, playAlarm } from '../hooks/audio';
 
 export default function NotificationsPanel({ onTestSound }) {
@@ -7,6 +7,7 @@ export default function NotificationsPanel({ onTestSound }) {
   const [msg, setMsg] = useState('');
   const [audioName, setAudioName] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -94,6 +95,8 @@ export default function NotificationsPanel({ onTestSound }) {
     setMsg('Enviando notificación de prueba...');
     const r = await testNotify();
     setMsg(r.sent > 0 ? '✅ Notificación enviada.' : '⚠️ No hay dispositivos suscritos.');
+    const d = await getDebugInfo();
+    setDebugInfo(d);
   }
 
   if (status === 'unsupported') {
@@ -159,6 +162,13 @@ export default function NotificationsPanel({ onTestSound }) {
       </div>
 
       {msg && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>{msg}</p>}
+      {debugInfo && (
+        <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 8, background: 'rgba(0,0,0,0.3)', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+          <span style={{ color: 'var(--accent)' }}>suscripciones:</span> {debugInfo.subscriptions}<br/>
+          <span style={{ color: 'var(--accent)' }}>hora servidor:</span> {debugInfo.localTime}<br/>
+          <span style={{ color: 'var(--accent)' }}>timezone:</span> {debugInfo.timezone}
+        </div>
+      )}
 
       {/* Audio personalizado */}
       <div style={{ marginTop: 14, padding: '14px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
