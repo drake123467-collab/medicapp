@@ -184,6 +184,7 @@ async function sendToAll(subscriptions, payload) {
       await webpush.sendNotification(sub, payload);
       results.push(sub.endpoint);
     } catch (err) {
+      console.error(`[push] error ${err.statusCode}: ${err.message}`);
       if (err.statusCode === 410 || err.statusCode === 404) {
         dead.push(sub.endpoint);
       }

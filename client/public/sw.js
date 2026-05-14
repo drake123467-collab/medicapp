@@ -1,9 +1,9 @@
 self.addEventListener('install', e => {
-  e.waitUntil(self.skipWaiting());
+  e.waitUntil(Promise.resolve());
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(Promise.resolve());
 });
 
 self.addEventListener('fetch', e => {
